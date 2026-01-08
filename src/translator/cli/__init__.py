@@ -63,7 +63,7 @@ def main_callback(
 
     3. 交互式模式: translate -I -d en2zh
     """
-    # 如果调用了子命令，跳过主回调逻辑
+    # 如果调用了子命令, 跳过主回调逻辑
     if ctx.invoked_subcommand is not None:
         return
 
@@ -263,9 +263,7 @@ def version():
 @app.command()
 def download(
     output: Annotated[Path | None, typer.Option("--output", "-o", help="输出目录")] = None,
-    model: Annotated[
-        str, typer.Option("--model", "-m", help="模型名称")
-    ] = "tencent/HY-MT1.5-1.8B",
+    model: Annotated[str, typer.Option("--model", "-m", help="模型名称")] = "tencent/HY-MT1.5-1.8B",
     mirror: Annotated[bool, typer.Option("--mirror", help="使用中国镜像")] = False,
 ):
     """下载翻译模型到本地"""

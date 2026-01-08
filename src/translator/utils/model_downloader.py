@@ -77,7 +77,7 @@ def download_model(
 
             progress.update(task, completed=100)
 
-        console.print(f"\n[green]✓ 模型下载完成！[/green]")
+        console.print("\n[green]✓ 模型下载完成！[/green]")
         console.print(f"[green]模型路径: {model_path}[/green]")
 
         return Path(model_path)
@@ -97,11 +97,7 @@ def check_model_exists(model_path: str | Path) -> bool:
     if not model_path.exists():
         return False
 
-    for file in required_files:
-        if not (model_path / file).exists():
-            return False
-
-    return True
+    return all((model_path / file).exists() for file in required_files)
 
 
 def main():
