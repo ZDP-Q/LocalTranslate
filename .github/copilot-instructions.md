@@ -4,6 +4,12 @@
 
 企业级 AI 翻译系统，基于 **Tencent HY-MT1.5** (1.8B 参数)，采用 src-layout 架构，支持中英日互译。
 
+**新增特性 (v2.1):**
+- 🚀 一键安装脚本（Windows/Linux）
+- 📦 本地模型管理（避免重复下载）
+- 🌐 自动 HuggingFace 镜像检测
+- 💾 模型下载工具 (`translate download`)
+
 ## Architecture
 
 ```
@@ -11,15 +17,15 @@ src/translator/
 ├── __init__.py           # 包导出
 ├── config/
 │   ├── __init__.py       # 配置入口 (Settings, get_settings)
-│   ├── settings.py       # Pydantic Settings 配置管理
+│   ├── settings.py       # Pydantic Settings 配置管理（支持本地模型路径）
 │   └── languages.py      # 语言方向注册表 (LanguageRegistry)
 ├── core/
 │   ├── __init__.py       # 核心模块导出
-│   ├── engine.py         # TranslationEngine 翻译引擎
+│   ├── engine.py         # TranslationEngine（支持本地模型）
 │   ├── models.py         # Pydantic 数据模型
 │   └── exceptions.py     # 异常层次结构
 ├── cli/
-│   └── __init__.py       # Typer CLI (Rich 美化输出)
+│   └── __init__.py       # Typer CLI (添加 download 命令)
 ├── gui/
 │   ├── __init__.py       # GUI 导出
 │   ├── app.py            # PySide6 主窗口
@@ -28,16 +34,24 @@ src/translator/
 └── utils/
     ├── __init__.py       # 工具导出
     ├── logging.py        # 结构化日志
-    └── file_handler.py   # 文件 I/O
+    ├── file_handler.py   # 文件 I/O
+    └── model_downloader.py  # 模型下载工具（新增）
 tests/                    # pytest 测试
+setup.ps1                 # Windows 一键安装脚本（新增）
+setup.sh                  # Linux 一键安装脚本（新增）
 ```
 
 ### Key Design Patterns
 
 ```python
 # 配置使用 Pydantic Settings (支持环境变量和 .env)
-from src.translator.config import settings
+from translator.config import settings
 print(settings.model.name)  # TRANSLATOR_MODEL_NAME
+print(settings.model.get_model_name_or_path())  # 优先返回本地路径
+
+# 翻译引擎支持本地模型
+engine = TranslationEngine(model_name="./models/tencent--HY-MT1.5-1.8B")
+# 或通过 .env 配置: TRANSLATOR_MODEL_PATH=./models/...
 
 # 翻译引擎支持上下文管理器
 with TranslationEngine() as engine:
@@ -46,11 +60,19 @@ with TranslationEngine() as engine:
 # 语言方向通过注册表管理
 LanguageRegistry.register(LanguageDirection(...))
 direction = LanguageRegistry.get("en2zh")
+
+# 模型下载工具
+from translator.utils.model_downloader import download_model
+model_path = download_model("tencent/HY-MT1.5-1.8B", local_dir="./models")
 ```
 
 ## Development Commands
 
 ```bash
+# 一键安装
+.\setup.ps1         # Windows
+./setup.sh          # Linux/macOS
+
 # 安装依赖
 uv sync
 uv sync --extra dev  # 开发依赖
@@ -60,6 +82,8 @@ uv run translate --text "Hello" -d en2zh  # 单文本翻译
 uv run translate -I -d en2zh              # 交互模式
 uv run translate languages                # 显示支持的语言
 uv run translate version                  # 显示版本信息
+uv run translate download -o ./models     # 下载模型到本地
+uv run translate-gui                      # 启动 GUI
 uv run translate-gui                      # 启动 GUI
 
 # 文件翻译

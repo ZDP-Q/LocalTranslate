@@ -17,11 +17,18 @@ class ModelSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="TRANSLATOR_MODEL_")
 
     name: str = Field(default="tencent/HY-MT1.5-1.8B", description="模型名称或本地路径")
+    path: Path | None = Field(default=None, description="本地模型路径（优先级高于 name）")
     device_map: str = Field(default="auto", description="设备映射策略")
     use_bfloat16: bool = Field(default=True, description="是否使用 bfloat16 精度")
     max_new_tokens: int = Field(default=2048, ge=128, le=8192, description="最大生成 token 数")
     do_sample: bool = Field(default=False, description="是否使用采样生成")
     temperature: float = Field(default=1.0, ge=0.0, le=2.0, description="采样温度")
+
+    def get_model_name_or_path(self) -> str:
+        """获取模型名称或路径（优先使用本地路径）"""
+        if self.path and Path(self.path).exists():
+            return str(self.path)
+        return self.name
 
 
 class LoggingSettings(BaseSettings):

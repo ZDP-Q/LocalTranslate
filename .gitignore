@@ -66,6 +66,10 @@ models/
 output/
 *.pt
 *.bin
+*.safetensors
+
+# HuggingFace cache
+.cache/
 
 # mypy
 .mypy_cache/

@@ -10,24 +10,62 @@
 - 📦 **批量处理**: 文件翻译、批量翻译
 - 🔧 **企业级**: src-layout、Pydantic 配置、完整测试
 - 📝 **多格式**: TXT / JSON 输入输出
+- 🚀 **一键安装**: 自动检测和配置环境
+- 🌐 **离线支持**: 本地模型存储，无需重复下载
 
 ## 🚀 快速开始
 
-### 安装
+### 一键安装（推荐）
 
+**Windows (PowerShell):**
+```powershell
+# 克隆项目
+git clone https://github.com/ZDP-Q/LocalTranslate.git
+cd LocalTranslate
+
+# 运行安装脚本
+.\setup.ps1
+```
+
+**Linux / macOS (Bash):**
 ```bash
 # 克隆项目
-git clone <repo-url>
-cd ai-translation-system
+git clone https://github.com/ZDP-Q/LocalTranslate.git
+cd LocalTranslate
 
-# 安装依赖（推荐使用 uv）
+# 运行安装脚本（添加执行权限）
+chmod +x setup.sh
+./setup.sh
+```
+
+### 手动安装
+
+```bash
+# 1. 安装 uv（如果没有）
+# Windows: https://docs.astral.sh/uv/getting-started/installation/
+# Linux/Mac: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. 克隆项目
+git clone https://github.com/ZDP-Q/LocalTranslate.git
+cd LocalTranslate
+
+# 3. 创建配置文件
+cp .env.example .env
+
+# 4. 安装依赖
 uv sync
-uv sync --extra dev  # 开发依赖
+uv sync --extra dev  # 可选：开发依赖
+
+# 5. 下载模型（可选，首次使用会自动下载）
+uv run translate download -o ./models
 ```
 
 ### 基础使用
 
 ```bash
+# 查看支持的语言
+uv run translate languages
+
 # 单文本翻译
 uv run translate --text "Hello" -d en2zh
 
@@ -39,15 +77,26 @@ uv run translate -i input.txt -o output.txt -d en2zh
 
 # GUI 界面
 uv run translate-gui
-
-# 查看支持的语言
-uv run translate languages
-
-# 显示版本
-uv run translate version
 ```
 
 ## 📖 使用指南
+
+### 模型管理
+
+```bash
+# 下载模型到默认位置（./models）
+uv run translate download
+
+# 下载到指定目录
+uv run translate download -o /path/to/models
+
+# 使用中国镜像下载（自动检测网络）
+uv run translate download --mirror
+
+# 配置使用本地模型
+# 在 .env 文件中设置：
+# TRANSLATOR_MODEL_PATH=./models/tencent--HY-MT1.5-1.8B
+```
 
 ### 命令行 (CLI)
 
@@ -59,23 +108,6 @@ uv run translate --text "Hello, world!" -d en2zh
 # 中译英
 uv run translate -t "你好" -d zh2en
 # 输出: Hello
-```
-Hello, world!
-Good morning!
-How are you?
-```
-
-执行翻译：
-```bash
-python main.py --input input.txt --output output.txt --direction en2zh
-```
-
-输出文件 `output.txt`：
-```
-你好，世界！
-早上好！
-你好吗？
-```
 
 # 日译中
 uv run translate -t "こんにちは" -d ja2zh
@@ -164,11 +196,40 @@ src/translator/
 通过环境变量或 `.env` 文件配置：
 
 ```bash
+# UV 包管理器
+UV_LINK_MODE=copy  # Windows 推荐设置
+
+# 模型配置
 TRANSLATOR_MODEL_NAME=tencent/HY-MT1.5-1.8B
+TRANSLATOR_MODEL_PATH=./models/tencent--HY-MT1.5-1.8B  # 本地模型路径（优先级高）
 TRANSLATOR_MODEL_USE_BFLOAT16=true
+TRANSLATOR_MODEL_MAX_NEW_TOKENS=2048
+
+# HuggingFace 配置
+HF_ENDPOINT=https://hf-mirror.com  # 中国镜像（可选）
+
+# 日志和界面
 TRANSLATOR_LOG_LEVEL=INFO
 TRANSLATOR_GUI_THEME=dark
 ```
+
+### 本地模型配置
+
+1. **下载模型到本地**:
+   ```bash
+   uv run translate download -o ./models
+   ```
+
+2. **配置使用本地模型**:
+   在 `.env` 文件中添加或修改：
+   ```bash
+   TRANSLATOR_MODEL_PATH=./models/tencent--HY-MT1.5-1.8B
+   ```
+
+3. **验证配置**:
+   ```bash
+   uv run translate version
+   ```
 
 ## 🧪 测试
 
@@ -219,14 +280,20 @@ pre-commit run --all-files
 ```python
 from translator import TranslationEngine, TranslationRequest
 
-# 初始化引擎
+# 方式1: 自动使用配置的模型
 engine = TranslationEngine().load()
+
+# 方式2: 指定本地模型路径
+engine = TranslationEngine(model_name="./models/tencent--HY-MT1.5-1.8B").load()
+
+# 方式3: 指定 HuggingFace 模型
+engine = TranslationEngine(model_name="tencent/HY-MT1.5-1.8B").load()
 
 # 单文本翻译
 result = engine.translate_text("Hello", "en2zh")
 print(result)  # 你好
 
-# 使用上下文管理器
+# 使用上下文管理器（自动卸载模型）
 with TranslationEngine() as engine:
     result = engine.translate_text("Hello", "en2zh")
     print(result)
@@ -247,7 +314,18 @@ result = engine.translate_file(
 )
 ```
 
-## 📋 命令行选项
+## 📋 命令行参考
+
+### 主命令
+
+| 命令 | 说明 |
+|------|------|
+| `translate` | 翻译文本或文件（默认命令） |
+| `translate languages` | 显示支持的语言方向 |
+| `translate version` | 显示版本信息 |
+| `translate download` | 下载模型到本地 |
+
+### 翻译选项
 
 | 选项 | 短选项 | 说明 | 默认值 |
 |------|--------|------|--------|
@@ -263,19 +341,39 @@ result = engine.translate_file(
 | `--format` | `-f` | 文件格式 (txt/json) | `txt` |
 | `--verbose` | `-v` | 详细输出 | `False` |
 
+### 模型下载选项
+
+| 选项 | 短选项 | 说明 |
+|------|--------|------|
+| `--output` | `-o` | 输出目录（默认: ./models） |
+| `--model` | `-m` | 模型名称 |
+| `--mirror` | - | 使用中国镜像 |
+
 ## 🚨 常见问题
 
+**Q: 一键安装脚本做了什么？**  
+A: 自动检测并安装 uv → 创建 .env 配置 → 检测网络并配置镜像 → 询问模型存储位置 → 安装依赖 → 可选下载模型。
+
+**Q: 如何使用本地模型？**  
+A: 运行 `uv run translate download -o ./models`，然后在 `.env` 中设置 `TRANSLATOR_MODEL_PATH=./models/tencent--HY-MT1.5-1.8B`。
+
+**Q: 无法访问 HuggingFace？**  
+A: 安装脚本会自动检测并配置中国镜像 (hf-mirror.com)，或手动在 `.env` 中添加 `HF_ENDPOINT=https://hf-mirror.com`。
+
 **Q: 首次运行很慢？**  
-A: 第一次需要下载 ~4GB 模型，后续使用会从缓存加载。
+A: 第一次需要下载 ~4GB 模型。使用一键安装脚本可在安装时选择预下载，或使用 `translate download` 命令手动下载。
 
 **Q: CUDA out of memory？**  
 A: 尝试使用 `--no-bfloat16` 或减少 `--max-tokens`。
 
 **Q: 支持离线使用吗？**  
-A: 首次联网下载模型后可离线使用。
+A: 是的！下载模型到本地后即可完全离线使用。推荐在 `.env` 中配置 `TRANSLATOR_MODEL_PATH` 指向本地模型。
 
 **Q: 如何自定义翻译风格？**  
 A: 使用 `--prompt` 参数提供自定义提示词。
+
+**Q: 模型存储在哪里？**  
+A: 默认在 `~/.cache/huggingface`。使用 `translate download -o <path>` 可指定本地路径。
 
 ## 📦 依赖项
 
@@ -283,6 +381,8 @@ A: 使用 `--prompt` 参数提供自定义提示词。
 |---|---|---|
 | `torch` | >=2.0.0 | PyTorch 深度学习框架 |
 | `transformers` | >=4.30.0 | HuggingFace 模型库 |
+| `accelerate` | >=0.20.0 | 模型加速库 |
+| `huggingface-hub` | >=0.20.0 | 模型下载工具 |
 | `accelerate` | >=0.20.0 | 模型加速 |
 | `pydantic` | >=2.0.0 | 数据验证 |
 | `pydantic-settings` | >=2.0.0 | 配置管理 |

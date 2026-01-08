@@ -260,6 +260,31 @@ def version():
     )
 
 
+@app.command()
+def download(
+    output: Annotated[Path | None, typer.Option("--output", "-o", help="输出目录")] = None,
+    model: Annotated[
+        str, typer.Option("--model", "-m", help="模型名称")
+    ] = "tencent/HY-MT1.5-1.8B",
+    mirror: Annotated[bool, typer.Option("--mirror", help="使用中国镜像")] = False,
+):
+    """下载翻译模型到本地"""
+    from translator.utils.model_downloader import download_model
+
+    try:
+        output_dir = str(output) if output else None
+        model_path = download_model(model_name=model, local_dir=output_dir, use_mirror=mirror)
+
+        console.print("\n[green]✓ 下载成功！[/green]")
+        console.print(f"[cyan]模型路径: {model_path}[/cyan]")
+        console.print(
+            f"\n[yellow]提示: 在 .env 文件中设置 TRANSLATOR_MODEL_PATH={model_path} 使用本地模型[/yellow]"
+        )
+    except Exception as e:
+        console.print(f"[red]下载失败: {e}[/red]")
+        raise typer.Exit(1)
+
+
 def main():
     """CLI 入口"""
     app()

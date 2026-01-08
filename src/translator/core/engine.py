@@ -52,7 +52,8 @@ class TranslationEngine:
         """
         settings = get_settings()
 
-        self.model_name = model_name or settings.model.name
+        # 优先使用本地模型路径
+        self.model_name = model_name or settings.model.get_model_name_or_path()
         self.use_bfloat16 = (
             use_bfloat16 if use_bfloat16 is not None else settings.model.use_bfloat16
         )
@@ -62,6 +63,8 @@ class TranslationEngine:
         self._model = None
         self._tokenizer = None
         self._loaded = False
+
+        logger.debug(f"Engine initialized with model: {self.model_name}")
 
     @property
     def is_loaded(self) -> bool:
