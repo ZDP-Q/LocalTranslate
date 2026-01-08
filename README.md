@@ -12,6 +12,7 @@
 - 📝 **多格式**: TXT / JSON 输入输出
 - 🚀 **一键安装**: 自动检测和配置环境
 - 🌐 **离线支持**: 本地模型存储，无需重复下载
+- 📦 **可执行文件**: 使用 Nuitka 编译为原生程序（可选）
 
 ## 🚀 快速开始
 
@@ -375,6 +376,9 @@ A: 使用 `--prompt` 参数提供自定义提示词。
 **Q: 模型存储在哪里？**  
 A: 默认在 `~/.cache/huggingface`。使用 `translate download -o <path>` 可指定本地路径。
 
+**Q: 如何编译为可执行文件？**  
+A: 参见 [BUILD.md](BUILD.md) 获取完整的 Nuitka 编译指南。
+
 ## 📦 依赖项
 
 | 包 | 版本 | 用途 |
@@ -402,6 +406,7 @@ MIT License
 
 - [Tencent HY-MT1.5 Model](https://huggingface.co/tencent/HY-MT1.5-1.8B)
 - [Transformers](https://github.com/huggingface/transformers)
+- [Nuitka 编译指南](BUILD.md) - 将项目编译为可执行文件
 - [Project Documentation](#)
 
 ---
